@@ -1,0 +1,105 @@
+<button id="logoutButton" onclick="logout()">Logout</button>
+<h2>Add new task:</h2>
+<form id="taskForm" onsubmit="create(event)">
+	<label for="description">New Task:</label>
+	<input type="text" name="description" id="description" required>
+	<label for="deadline">Deadline:</label>
+	<input type="datetime-local" name="deadline" id="deadline" required>
+	<button type="submit">Add Task</button>
+</form>
+<hr />
+<h2>Your Future-task list:</h2>
+<ul id="futureTasks"></ul>
+<h2>Your Past-task list:</h2>
+<ul id="pastTasks"></ul>
+<script>
+	// DOMコンテンツが読み込まれた後にfetchTasks関数を実行
+	document.addEventListener('DOMContentLoaded', () => {
+		fetchTasks();
+	});
+	// タスク作成フォームの送信を処理する関数
+	async function create(e) {
+		// フォームのデフォルトの送信動作をキャンセル
+		e.preventDefault();
+		// フォームからタスクの説明と期限を取得
+		const description = document.getElementById('description').value;
+		const deadline = document.getElementById('deadline').value;
+		// 新しいタスクを追加し、フォームをリセット
+		await addTask(description, deadline);
+		taskForm.reset();
+	}
+	// サーバーからタスクのリストを取得し表示する関数
+	async function fetchTasks() {
+		// タスクを取得するためのGETリクエストを送信
+		const response = await fetch('/api/tasks');
+		const tasks = await response.json(); // レスポンスをJSONパース
+		// 将来のタスクの表示
+		const futureTasks = document.querySelector('#futureTasks');
+		futureTasks.innerHTML = ''; // 既存の内容をクリア
+		tasks.futureTasks.forEach(task => {
+			// リストアイテムのエレメントを作成
+			const li = document.createElement('li');
+			// コンテキストを設定
+			li.textContent = task.description + ' (' + task.deadline + ')';
+			// ボタンのエレメントを作成
+			const deleteButton = document.createElement('button');
+			// ボタン名を設定
+			deleteButton.textContent = 'Delete';
+			// スタイルクラスを設定
+			deleteButton.className = 'mini';
+			// 削除ボタンにクリックイベントを追加
+			deleteButton.onclick = () => deleteTask(task.id);
+			// 削除ボタンをリストアイテムに追加
+			li.appendChild(deleteButton);
+			// リストアイテムを将来のタスクリストに追加
+			futureTasks.appendChild(li);
+		});
+		// 過去のタスクの表示
+		const pastTasks = document.querySelector('#pastTasks');
+		pastTasks.innerHTML = ''; // 既存の内容をクリア
+		tasks.pastTasks.forEach(task => {
+			// リストアイテムのエレメントを作成
+			const li = document.createElement('li');
+			// コンテキストを設定
+			li.textContent = task.description + ' (' + task.deadline + ')';
+			// ボタンのエレメントを作成
+			const deleteButton = document.createElement('button');
+			// ボタン名を設定
+			deleteButton.textContent = 'Delete';
+			// スタイルクラスを設定
+			deleteButton.className = 'mini';
+			// 削除ボタンにクリックイベントを追加
+			deleteButton.onclick = () => deleteTask(task.id);
+			// 削除ボタンをリストアイテムに追加
+			li.appendChild(deleteButton);
+			// リストアイテムを過去のタスクリストに追加
+			pastTasks.appendChild(li);
+		});
+	}
+	// タスクを追加するPOSTリクエストを送信する関数
+	async function addTask(description, deadline) {
+		await fetch('/api/tasks', {
+			method: 'POST', // リクエストメソッドはPOST
+			headers: {
+				'Content-Type': 'application/json' // Content-Typeを指定 
+			},
+			body: JSON.stringify({ description, deadline }) // 説明と期限を設定
+		});
+		fetchTasks(); // 追加後にタスクリストを再取得
+	}
+	// タスクを削除するDELETEリクエストを送信する関数
+	async function deleteTask(id) {
+		await fetch(`/api/tasks/${id}`, {
+			method: 'DELETE' // リクエストメソッドはDELETE
+		});
+		fetchTasks(); // 削除後にタスクリストを再取得
+	}
+	// ログアウト処理を行いトップにリダイレクトする関数
+	async function logout() {
+		await fetch('/api/users/logout', {
+			method: 'POST' // リクエストメソッドはPOST
+		});
+		// ログアウト後にトップページにリダイレクト
+		window.location.href = '/';
+	}
+</script>

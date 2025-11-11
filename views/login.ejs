@@ -1,0 +1,29 @@
+<form onsubmit="login(event)">
+	<label for="username">username:</label>
+	<input type="text" name="username" id="username" required>
+	<label for="password">Password:</label>
+	<input type="password" name="password" id="password" required>
+	<button type="submit">Login</button>
+</form>
+<script>
+	async function login(e) {
+		// フォームのデフォルトの送信をキャンセル
+		e.preventDefault();
+		// フォームからユーザー名とパスワードを取得
+		const username = document.querySelector('#username').value;
+		const password = document.querySelector('#password').value;
+		// '/api/users/login'エンドポイントに対してPOSTリクエストを送信
+		const response = await fetch('/api/users/login', {
+			method: 'POST', // リクエストメソッドはPOST
+			headers: { 'Content-Type': 'application/json' }, // Content-Typeを指定
+			body: JSON.stringify({ username, password }) // ユーザー名とパスワードを指定
+		});
+		// レスポンスが成功した場合、タスクページにリダイレクト
+		if (response.ok) {
+			window.location.href = '/tasks';
+		} else {
+			// ログインに失敗した場合はアラートを表示
+			alert('Login failed');
+		}
+	}
+</script>
